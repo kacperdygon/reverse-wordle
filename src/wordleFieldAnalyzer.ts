@@ -1,8 +1,8 @@
 import { WordleFieldState, type PlayerWordleField, type Misplaced, type WordleField } from "./wordle";
 
 export class WordleFieldAnalyzer {
-  fields: WordleField[];
-      misplaced: Misplaced[];
+    fields: WordleField[];
+    misplaced: Misplaced[];
 
       constructor(length: number){
           this.misplaced = [];
@@ -16,6 +16,10 @@ export class WordleFieldAnalyzer {
           this.applyCorrectFieldsData(fields);
           this.applyMisplacedFieldsData(fields);
           this.applyNotPresentFieldsData(fields);
+      }
+
+      clearMisplaced(){
+        this.misplaced = this.misplaced.filter(m => m.count > 0);
       }
 
       getNotSolvedFields(){
@@ -94,10 +98,14 @@ export class WordleFieldAnalyzer {
 
       applyNotPresentFieldsData(playerFields: PlayerWordleField[]){
 
-          for (const playerField of playerFields){
-              if (playerField.state === WordleFieldState.NotPresent
-                  && !this.isDigitAlreadyMisplaced(playerField.digit)){
-                      this.applyNotPresentDigitData(playerField.digit);
+          for (const [index, playerField] of playerFields.entries()){
+              if (playerField.state === WordleFieldState.NotPresent){
+                if (!this.isDigitAlreadyMisplaced(playerField.digit))
+                    this.applyNotPresentDigitData(playerField.digit);
+                else {
+                    const possibleDigits = this.getFieldPossibleDigits(index).filter(d => d !== playerField.digit);
+                    this.setFieldPossibleDigits(index, possibleDigits);
+                }
               }
           }
 
