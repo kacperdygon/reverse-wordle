@@ -7,6 +7,8 @@ interface UnsolvedField{
 
 export class WordleGuesser {
 
+    guesses: string[][] = [];
+
     guess(wordleData: WordleAnalyzerData): string{
 
         const guess: string[] = wordleData.fields.map(field => field.solvedNum !== null ? field.solvedNum : '?');
@@ -16,58 +18,78 @@ export class WordleGuesser {
             possible: field.possible
         }) : undefined).filter(f => f !== undefined);
 
-        const finalGuess = this.guessNextDigit(0, wordleData.misplaced, fields, guess);
+        this.guessNextDigit(0, wordleData.misplaced, fields, guess);
+
+        const finalGuess = this.guesses[Math.floor(Math.random() * this.guesses.length)];
 
         if (!finalGuess) return 'no guess';
+
+        console.log([...this.guesses]);
+        console.log(this.guesses.length);
+
+        this.guesses.length = 0;
 
         return finalGuess.join('');
     }
 
-    guessNextDigit(position: number, misplaced: Misplaced[], fields: UnsolvedField[], guess: string[]): string[] {
+    guessNextDigit(position: number, misplaced: Misplaced[], fields: UnsolvedField[], guess: string[]): void {
 
         if (position >= fields.length) {
-            return guess;
+            this.guesses.push(guess);
         }
 
-        if (!fields[position]) return guess;
-        if (fields[position].possible.length === 0) return guess;
+        if (!fields[position]) return;
+        if (fields[position].possible.length === 0) return;
 
-        const digit = fields[position].possible[Math.floor(Math.random() * fields.length)] as string;
+        
+        for (const digit of fields[position].possible) {
 
+            const fieldsCopy = fields.map(f => ({
+                index: f.index,
+                possible: [...f.possible]
+            }));
             guess = [...guess];
-            guess[fields[position].index] = digit;
+
+            if (!fieldsCopy[position]) return;
+            guess[fieldsCopy[position].index] = digit;
             
             
-            misplaced = misplaced.map(m => {
+            const misplacedCopy = misplaced.map(m => {
                 if (m.digit !== digit) return m;
                 return {
                     ...m,
                     count: m.count - 1
                 }
             });
+
+            const misplacedCount = misplacedCopy.reduce((a, b) => a + b.count, 0);
+            const remainingPositions = fieldsCopy.length - (position + 1);
+
+            if (misplacedCount >= remainingPositions){
+                for (let i = position + 1; i < fieldsCopy.length; i++) {
+                    const field = fieldsCopy[i];
+                    if (!field) continue;
+                    field.possible = field.possible.filter(d => misplacedCopy.some(m => m.digit === d));
+                }
+            } 
             
-            const thisMisplacedDigit = misplaced.find(m => m.digit === digit);
+            const thisMisplacedDigit = misplacedCopy.find(m => m.digit === digit);
             if (!thisMisplacedDigit || 
                 thisMisplacedDigit.count > 0 || 
                 !thisMisplacedDigit.isMax) {
-                    return this.guessNextDigit(position + 1, misplaced, fields, guess);
+                    this.guessNextDigit(position + 1, misplacedCopy, fieldsCopy, guess);
+                    continue;
                 }
 
-            for (let i = position + 1; i < fields.length; i++) {
-                const field = fields[i];
+            for (let i = position + 1; i < fieldsCopy.length; i++) {
+                const field = fieldsCopy[i];
                 if (!field) continue;
-                if (fields[i] != undefined && field.possible.includes(digit)) {
-                    field.possible = field.possible.filter(d => d !== digit);
-                }
+                field.possible = field.possible.filter(d => d !== digit);
             }
 
-            return this.guessNextDigit(position + 1, misplaced, fields, guess);
+            this.guessNextDigit(position + 1, misplacedCopy, fieldsCopy, guess);
 
-        
+        }
     }
-
-    //TODO: Force guesser to use misplaced digits from previous guesses
-
-
 
 }
