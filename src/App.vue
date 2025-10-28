@@ -1,44 +1,23 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { Wordle, WordleFieldState, type PlayerWordleField } from './wordleClass';
+import { Wordle } from './wordle';
+import { exampleFieldData } from './exampleFieldData';
 
 const wordle = new Wordle(5);
 
-const exampleFieldData: PlayerWordleField[] = [
-  {
-    digit: "5",
-    state: WordleFieldState.Correct
-  },
-  {
-    digit: "3",
-    state: WordleFieldState.NotPresent
-  },
-  {
-    digit: "8",
-    state: WordleFieldState.NotPresent
-  },
-  {
-    digit: "7",
-    state: WordleFieldState.Misplaced
-  },
-  {
-    digit: "7",
-    state: WordleFieldState.NotPresent
-  }
-]
-
-onMounted(() => {
-  wordle.applyFieldData(exampleFieldData);
-
+function useData(index: number){
+  if (!exampleFieldData[index]) return;
+  wordle.applyFieldData(exampleFieldData[index]);
   console.log(wordle.getAllData());
-})
+}
 
 </script>
 
 
 
 <template>
-  
+<button @click="useData(0)">Field data one</button>
+<button @click="useData(1)">Field data two</button>
+<button @click="useData(2)">Field data three</button>
 </template>
 
 <style scoped></style>
