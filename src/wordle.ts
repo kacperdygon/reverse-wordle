@@ -1,6 +1,6 @@
 // import { exampleAnalyzerData } from "./exampleData";
 import { WordleFieldAnalyzer } from "./wordleFieldAnalyzer";
-import { WordleGuesser } from "./wordleGuesser";
+import type { WordleGuesser } from "./wordleGuesser";
 
 export interface Misplaced{
     digit: string,
@@ -35,9 +35,9 @@ export class Wordle{
   wordleFieldAnalyzer: WordleFieldAnalyzer;
   wordleGuesser: WordleGuesser;
 
-  constructor(wordLength: number){
+  constructor(wordLength: number, wordleGuesser: WordleGuesser){
       this.wordleFieldAnalyzer = new WordleFieldAnalyzer(wordLength);
-      this.wordleGuesser = new WordleGuesser();
+      this.wordleGuesser = wordleGuesser;
   }
 
   analyzeData(fields: PlayerWordleField[]){
@@ -48,7 +48,7 @@ export class Wordle{
     guess(wordleData: WordleAnalyzerData){
         return this.wordleGuesser.guess(wordleData);
     }
-    
+
   getAllAnalyzerData(){
       return this.wordleFieldAnalyzer.getAllData();
   }

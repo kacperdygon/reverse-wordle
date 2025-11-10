@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { exampleFieldData } from './exampleData';
 import { Wordle, WordleFieldState, type PlayerWordleField } from './wordle';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
+import { UnaccurateWordleGuesser } from './unaccurateWordleGuesser';
 
-const wordle = new Wordle(5);
+const numberLength = 11;
 
+const wordle = new Wordle(numberLength, new UnaccurateWordleGuesser());
 
-const fields = ref<PlayerWordleField[][]>(
+interface PlayerWordleFieldChangeable extends PlayerWordleField{
+  changeable: boolean;
+}
+
+const fields = ref<PlayerWordleFieldChangeable[][]>(
   Array.from({ length: 6 }, () =>
-    Array.from({ length: 5 }, () => {
+    Array.from({ length: numberLength }, () => {
       return {
         digit: '',
-        state: WordleFieldState.NotPresent
+        state: WordleFieldState.NotPresent,
+        changeable: true
       };
     }),
   ),
@@ -19,9 +25,13 @@ const fields = ref<PlayerWordleField[][]>(
 
 function onNext(){
 
+
+
   if (currentRowIndex == -1) {
     currentRowIndex++;
-    setData('27042');
+    setData(Array.from({ length: numberLength }, () =>
+      Math.floor(Math.random() * 10)
+    ).join(''));
     return;
   }
 
@@ -29,7 +39,7 @@ function onNext(){
   const currentRow = fields.value[currentRowIndex];
   if (!currentRow) return;
   const analyzedData = wordle.analyzeData(currentRow);
-  
+
   const result = wordle.guess(analyzedData);
 
   currentRowIndex++;
@@ -47,6 +57,16 @@ function setData(data: string){
 
     if (field === undefined) continue;
     field.digit = data[i] ?? '';
+
+    const previousRow = fields.value[currentRowIndex - 1];
+    if (!previousRow) continue;
+
+    const previousField = previousRow[i];
+    if (previousField === undefined) continue;
+
+    if (previousField.state !== WordleFieldState.Correct) continue;
+    field.state = WordleFieldState.Correct;
+    field.changeable = false;
   }
 }
 
@@ -90,12 +110,12 @@ onMounted(() => {
           v-for="(field, fieldIndex) in row"
           :key="fieldIndex"
           class="w-16 h-16 flex justify-center items-center text-3xl text-gray-50 select-none"
-          @click="rowIndex === currentRowIndex ? swapState(fieldIndex) : null"
+          @click="rowIndex === currentRowIndex && field.changeable ? swapState(fieldIndex) : null"
           :class="{
-            'bg-gray-500': field.state === WordleFieldState.NotPresent,
+            'outline-gray-400 outline-solid outline-1': !field.digit,
+            'bg-gray-500': field.state === WordleFieldState.NotPresent && field.digit,
             'bg-yellow-500': field.state === WordleFieldState.Misplaced,
             'bg-green-600': field.state === WordleFieldState.Correct,
-            'outline-gray-400 outline-solid outline-1': field.state === null,
           }"
         >
           {{ field.digit }}

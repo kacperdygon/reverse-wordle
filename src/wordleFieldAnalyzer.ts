@@ -62,7 +62,13 @@ export class WordleFieldAnalyzer {
 
           fields.forEach((value, index) => {
               if (value.state === WordleFieldState.Misplaced){
-                  if (misplacedDigits.includes(value.digit)) return;
+                  if (misplacedDigits.includes(value.digit)){
+                    let possibleDigits = this.getFieldPossibleDigits(index);
+                    possibleDigits = possibleDigits.filter(n => n !== value.digit);
+
+                    this.setFieldPossibleDigits(index, possibleDigits);
+                    return;
+                  }
                   this.applyMisplacedDigitData(value.digit, index, fields);
                   misplacedDigits.push(value.digit);
               }
